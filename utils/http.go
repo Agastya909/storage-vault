@@ -17,6 +17,7 @@ func HttpResponseHandler(w http.ResponseWriter, statusCode int, message string, 
 		"message": message,
 		"data":    data,
 	}
+
 	w.WriteHeader(statusCode)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
