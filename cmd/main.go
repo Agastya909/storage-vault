@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
-	"storage/repository/aws"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
@@ -11,16 +13,19 @@ func main() {
 		fmt.Println("Error loading configuration:", err)
 		return
 	}
-	awsRepo, err := aws.NewAwsRepository(cfg.AccessKeyID, cfg.SecretAccessKey, cfg.Region)
+
+	Handlers, err := SetupHandlers(cfg)
 	if err != nil {
-		fmt.Println("Error creating AWS repository:", err)
+		fmt.Println("Error setting up handlers:", err)
 		return
 	}
-	bucketName := "vault-storage-01-909"
-	result, err := awsRepo.DeleteBucket(bucketName)
-	if err != nil {
-		fmt.Println("Error deleting bucket:", err)
+
+	r := chi.NewRouter()
+	InitRoutes(r, Handlers)
+
+	port := fmt.Sprintf(":%s", cfg.Port)
+	if err := http.ListenAndServe(port, r); err != nil {
+		fmt.Println("Error starting server:", err)
 		return
 	}
-	fmt.Println(result)
 }

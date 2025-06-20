@@ -44,11 +44,11 @@ func (r *AwsRepository) CreateBucket(bucketName string) (string, error) {
 		},
 	}
 
-	bucket, err := s3Client.CreateBucket(context.TODO(), input)
+	_, err := s3Client.CreateBucket(context.TODO(), input)
 	if err != nil {
 		return "", fmt.Errorf("failed to create bucket: %w", err)
 	}
-	return fmt.Sprintf("Bucket created successfully: %s", aws.ToString(bucket.Location)), nil
+	return fmt.Sprintf("Bucket created successfully: %s", aws.ToString(&bucketName)), nil
 }
 
 func (r *AwsRepository) DeleteBucket(bucketName string) (string, error) {
@@ -60,4 +60,21 @@ func (r *AwsRepository) DeleteBucket(bucketName string) (string, error) {
 		return "", fmt.Errorf("failed to delete bucket: %w", err)
 	}
 	return fmt.Sprintf("Bucket deleted successfully: %s", bucketName), nil
+}
+
+func (r *AwsRepository) CreateSignedPutUrl(bucketName, objectKey string) (string, error) {
+	s3Client := s3.NewFromConfig(r.AwsCfg)
+	presignClient := s3.NewPresignClient(s3Client)
+
+	input := &s3.PutObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(objectKey),
+	}
+
+	presignedRequest, err := presignClient.PresignPutObject(context.TODO(), input)
+	if err != nil {
+		return "", fmt.Errorf("failed to create presigned URL: %w", err)
+	}
+
+	return presignedRequest.URL, nil
 }
