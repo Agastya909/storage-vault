@@ -11,5 +11,8 @@ func InitRoutes(r *chi.Mux, handlers Handlers) {
 
 	r.Route("/aws", func(r chi.Router) {
 		r.Post("/bucket/{bucketName}", handlers.AwsHandler.CreateBucket)
+		r.Get("/bucket/{bucketName}", handlers.AwsHandler.GetBucketInfo)
+
+		r.Get("/url/presigned/{bucketName}/{objectKey}", handlers.AwsHandler.GetPresignedUrl)
 	})
 }

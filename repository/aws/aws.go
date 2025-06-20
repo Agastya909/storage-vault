@@ -78,3 +78,37 @@ func (r *AwsRepository) CreateSignedPutUrl(bucketName, objectKey string) (string
 
 	return presignedRequest.URL, nil
 }
+
+func (r *AwsRepository) GetBucketInfo(bucketName string) (map[string]any, error) {
+	s3Client := s3.NewFromConfig(r.AwsCfg)
+	input := &s3.GetBucketLocationInput{
+		Bucket: aws.String(bucketName),
+	}
+
+	location, err := s3Client.GetBucketLocation(context.TODO(), input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get bucket location: %w", err)
+	}
+
+	objects, err := s3Client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucketName),
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to list objects in bucket: %w", err)
+	}
+	size := 0.0
+	if len(objects.Contents) > 0 {
+		for _, object := range objects.Contents {
+			size += float64(*object.Size)
+		}
+	}
+	bucketInfo := map[string]any{
+		"bucker_name":     bucketName,
+		"bucket_location": location.LocationConstraint,
+		"bucket_size":     size,
+		"bucket_objects":  len(objects.Contents),
+	}
+
+	return bucketInfo, nil
+}
