@@ -112,3 +112,24 @@ func (r *AwsRepository) GetBucketInfo(bucketName string) (map[string]any, error)
 
 	return bucketInfo, nil
 }
+
+func (r *AwsRepository) GetObjectInfo(bucketName, objectKey string) (map[string]any, error) {
+	s3Client := s3.NewFromConfig(r.AwsCfg)
+	input := &s3.HeadObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(objectKey),
+	}
+
+	result, err := s3Client.HeadObject(context.TODO(), input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get object info: %w", err)
+	}
+
+	objectInfo := map[string]any{
+		"object_key":   objectKey,
+		"content_type": result.ContentType,
+		"size":         result.ContentLength,
+	}
+
+	return objectInfo, nil
+}
